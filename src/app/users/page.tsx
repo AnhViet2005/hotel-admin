@@ -6,7 +6,8 @@ import {
   User as UserIcon, Loader2, ToggleLeft, ToggleRight, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getAdminUsers, toggleUserStatus, deleteAdminUser } from "@/utils/api";
+import { getAdminUsers, toggleUserStatus, deleteAdminUser, getMyCustomers } from "@/utils/api";
+import { isAdmin as checkIsAdmin, isOwner as checkIsOwner } from "@/lib/auth";
 
 interface AdminUser {
   id: number;
@@ -30,12 +31,14 @@ const ROLE_BADGE: Record<string, string> = {
   ADMIN: "bg-red-100 text-red-600 dark:bg-red-900/30",
   OWNER: "bg-accent-500/10 text-accent-600",
   CUSTOMER: "bg-blue-100 text-blue-600 dark:bg-blue-900/30",
+  GUEST: "bg-slate-100 text-slate-600 dark:bg-slate-900/30",
 };
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Quản trị viên",
   OWNER: "Chủ khách sạn",
   CUSTOMER: "Khách hàng",
+  GUEST: "Khách vãng lai",
 };
 
 export default function UsersPage() {
@@ -46,6 +49,8 @@ export default function UsersPage() {
   const [activeRole, setActiveRole] = useState("ALL");
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const isAdmin = checkIsAdmin();
+  const isOwner = checkIsOwner();
 
   // Debounce search
   useEffect(() => {
@@ -56,17 +61,30 @@ export default function UsersPage() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAdminUsers(
-        debouncedSearch || undefined,
-        activeRole === "ALL" ? undefined : activeRole
-      );
-      setUsers(data);
+      let data;
+      if (isAdmin) {
+        data = await getAdminUsers(
+          debouncedSearch || undefined,
+          activeRole === "ALL" ? undefined : activeRole
+        );
+      } else if (isOwner) {
+        data = await getMyCustomers();
+        // Manual filter for owner since API is simpler
+        if (debouncedSearch) {
+          const kw = debouncedSearch.toLowerCase();
+          data = data.filter((u: any) => 
+            u.fullName.toLowerCase().includes(kw) || 
+            u.email.toLowerCase().includes(kw)
+          );
+        }
+      }
+      setUsers(data || []);
     } catch {
-      /* empty */
+      setUsers([]);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, activeRole]);
+  }, [debouncedSearch, activeRole, isAdmin, isOwner]);
 
   useEffect(() => {
     fetchUsers();
@@ -116,38 +134,56 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-card p-4 rounded-xl border">
-        {/* Search */}
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Tìm theo tên hoặc email..."
-            className="w-full bg-muted border-none rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent-500"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      {/* Filters - Only show for Admin */}
+      {isAdmin && (
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-card p-4 rounded-xl border">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Tìm theo tên hoặc email..."
+              className="w-full bg-muted border-none rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent-500"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        {/* Role Tabs */}
-        <div className="flex gap-1 p-1 bg-muted rounded-xl border flex-shrink-0 overflow-x-auto">
-          {ROLES.map((r) => (
-            <button
-              key={r.key}
-              onClick={() => setActiveRole(r.key)}
-              className={cn(
-                "px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap",
-                activeRole === r.key
-                  ? "bg-card shadow-sm border"
-                  : "text-muted-foreground hover:bg-card/50"
-              )}
-            >
-              {r.label}
-            </button>
-          ))}
+          {/* Role Tabs */}
+          <div className="flex gap-1 p-1 bg-muted rounded-xl border flex-shrink-0 overflow-x-auto">
+            {ROLES.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setActiveRole(r.key)}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap",
+                  activeRole === r.key
+                    ? "bg-card shadow-sm border"
+                    : "text-muted-foreground hover:bg-card/50"
+                )}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Basic Search for Owner */}
+      {isOwner && !isAdmin && (
+        <div className="bg-card p-4 rounded-xl border">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Tìm khách hàng của bạn..."
+              className="w-full bg-muted border-none rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-accent-500"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* User Grid */}
       {loading ? (
@@ -207,7 +243,7 @@ export default function UsersPage() {
                 </div>
               </div>
 
-              {/* Status + Toggle */}
+              {/* Status + Toggle - Only for Admin */}
               <div className="flex items-center justify-between pt-4 border-t">
                 <div className="flex items-center gap-2">
                   <div
@@ -221,39 +257,43 @@ export default function UsersPage() {
                   </span>
                 </div>
 
-                <button
-                  onClick={() => handleToggle(user.id)}
-                  disabled={togglingId === user.id}
-                  className={cn(
-                    "flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors",
-                    user.isActive
-                      ? "text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
-                      : "text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30"
-                  )}
-                >
-                  {togglingId === user.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : user.isActive ? (
-                    <ToggleLeft className="h-3.5 w-3.5" />
-                  ) : (
-                    <ToggleRight className="h-3.5 w-3.5" />
-                  )}
-                  {user.isActive ? "Khóa" : "Mở khóa"}
-                </button>
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggle(user.id)}
+                      disabled={togglingId === user.id}
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors",
+                        user.isActive
+                          ? "text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30"
+                          : "text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30"
+                      )}
+                    >
+                      {togglingId === user.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : user.isActive ? (
+                        <ToggleLeft className="h-3.5 w-3.5" />
+                      ) : (
+                        <ToggleRight className="h-3.5 w-3.5" />
+                      )}
+                      {user.isActive ? "Khóa" : "Mở khóa"}
+                    </button>
 
-                {user.role !== "ADMIN" && (
-                  <button
-                    onClick={() => handleDelete(user.id, user.fullName)}
-                    disabled={deletingId === user.id}
-                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                  >
-                    {deletingId === user.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
+                    {user.role !== "ADMIN" && (
+                      <button
+                        onClick={() => handleDelete(user.id, user.fullName)}
+                        disabled={deletingId === user.id}
+                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      >
+                        {deletingId === user.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                        Xóa
+                      </button>
                     )}
-                    Xóa
-                  </button>
+                  </div>
                 )}
               </div>
             </div>

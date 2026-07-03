@@ -18,6 +18,7 @@ interface Booking {
   totalAmount: number;
   depositAmount: number;
   remainingAmount: number;
+  remainingPaymentStatus: string;
   status: string;
   createdAt: string;
 }
@@ -58,8 +59,8 @@ export default function BookingsPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const fetchBookings = useCallback(async () => {
-    setLoading(true);
+  const fetchBookings = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const data = await getAdminBookings(
         debouncedSearch || undefined,
@@ -67,10 +68,14 @@ export default function BookingsPage() {
       );
       setBookings(data);
     } catch { /* empty */ }
-    finally { setLoading(false); }
+    finally { if (!silent) setLoading(false); }
   }, [debouncedSearch, activeTab]);
 
-  useEffect(() => { fetchBookings(); }, [fetchBookings]);
+  useEffect(() => { 
+    fetchBookings(); 
+    const interval = setInterval(() => fetchBookings(true), 5000);
+    return () => clearInterval(interval);
+  }, [fetchBookings]);
 
   const handleStatusChange = async (id: number, status: string) => {
     setUpdatingId(id);
@@ -333,33 +338,41 @@ export default function BookingsPage() {
                   ))}
                 </div>
 
-                <div className="bg-accent-500/5 border border-accent-500/20 rounded-3xl p-6">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-accent-600 mb-4">Trạng thái & Thanh toán</h3>
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-muted-foreground font-medium">Trạng thái đơn hàng</span>
-                    {getStatusBadge(detailBooking.status)}
+                  <div className={cn("bg-accent-500/5 border rounded-3xl p-6 transition-all", detailBooking.remainingPaymentStatus === "PAID" ? "border-green-500/40 bg-green-500/[0.02]" : "border-accent-500/20")}>
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-accent-600">Trạng thái & Thanh toán</h3>
+                      {detailBooking.remainingPaymentStatus === "PAID" && (
+                        <span className="bg-green-600 text-white text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter">Đã thanh toán đủ 100%</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mb-6">
+                      <span className="text-muted-foreground font-medium text-sm">Trạng thái đơn hàng</span>
+                      {getStatusBadge(detailBooking.status)}
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground font-semibold">TỔNG CỘNG</span>
+                        <span className="font-bold text-xl">{formatCurrency(detailBooking.totalAmount)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                          Tiền cọc (30% - Đã thu)
+                        </span>
+                        <span className="font-bold text-orange-600 text-sm">{formatCurrency(detailBooking.depositAmount ?? detailBooking.totalAmount * 0.3)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                          <div className={`w-1.5 h-1.5 rounded-full ${detailBooking.remainingPaymentStatus === "PAID" ? "bg-green-500" : "bg-slate-300"}`} />
+                          Phần còn lại (70%)
+                        </span>
+                        <span className={cn("font-bold text-sm", detailBooking.remainingPaymentStatus === "PAID" ? "text-green-600" : "text-slate-500")}>
+                          {formatCurrency(detailBooking.remainingAmount ?? detailBooking.totalAmount * 0.7)}
+                          {detailBooking.remainingPaymentStatus === "PAID" ? " (Đã thu)" : " (Chưa thu)"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground font-semibold">TỔNG CỘNG</span>
-                      <span className="font-bold text-xl">{formatCurrency(detailBooking.totalAmount)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                        Tiền cọc (30% - Đã thu)
-                      </span>
-                      <span className="font-bold text-orange-600">{formatCurrency(detailBooking.depositAmount ?? detailBooking.totalAmount * 0.3)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        <div className={`w-1.5 h-1.5 rounded-full ${detailBooking.status === "COMPLETED" ? "bg-green-500" : "bg-slate-300"}`} />
-                        Phần còn lại (70% - {detailBooking.status === "COMPLETED" ? "Đã thu" : "Thanh toán tại KS"})
-                      </span>
-                      <span className={`font-bold ${detailBooking.status === "COMPLETED" ? "text-green-600" : "text-slate-500"}`}>{formatCurrency(detailBooking.remainingAmount ?? detailBooking.totalAmount * 0.7)}</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Right Column: Actions */}

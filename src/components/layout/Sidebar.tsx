@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   Globe,
-  MessageSquare
+  MessageSquare,
+  Image
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -22,9 +23,10 @@ const navigation = [
   { name: "Tổng quan", href: "/", icon: LayoutDashboard },
   { name: "Khách sạn", href: "/hotels", icon: Hotel },
   { name: "Đơn đặt phòng", href: "/bookings", icon: CalendarDays },
-  { name: "Người dùng", href: "/users", icon: Users, adminOnly: true },
-  { name: "Đánh giá", href: "/reviews", icon: MessageSquare, adminOnly: true },
-  { name: "Cài đặt", href: "/settings", icon: Settings, adminOnly: true },
+  { name: "Người dùng", href: "/users", icon: Users },
+  { name: "Đánh giá", href: "/reviews", icon: MessageSquare },
+  { name: "Chat", href: "/chat", icon: MessageSquare },
+  { name: "Banner", href: "/banner", icon: Image, adminOnly: true },
 ];
 
 export default function Sidebar() {

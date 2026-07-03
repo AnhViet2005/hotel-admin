@@ -54,6 +54,20 @@ export const login = async (credentials: any) => {
   return response.data;
 };
 
+export const getProfile = async () => {
+  const response = await api.get('/user/profile');
+  return response.data;
+};
+
+export const updateSettings = async (data: FormData) => {
+  const response = await api.put('/user/settings', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
 // ─── Hotels ───────────────────────────────────────────────────────────────────
 export const getAdminHotels = async (keyword?: string) => {
   const params: any = {};
@@ -77,8 +91,13 @@ export const updateAdminHotel = async (id: number, data: any) => {
   return response.data;
 };
 
-export const deleteAdminHotel = async (id: number) => {
-  const response = await api.delete(`/admin/hotels/${id}`);
+export const deleteAdminHotel = async (id: number, type: 'soft' | 'hard' = 'soft') => {
+  const response = await api.delete(`/admin/hotels/${id}`, { params: { type } });
+  return response.data;
+};
+
+export const approveAdminHotel = async (id: number) => {
+  const response = await api.post(`/admin/hotels/${id}/approve`);
   return response.data;
 };
 
@@ -122,6 +141,11 @@ export const deleteAdminBooking = async (id: number) => {
 
 export const bulkDeleteAdminBookings = async (ids: number[]) => {
   await api.post('/admin/bookings/bulk-delete', ids);
+};
+
+export const getMyCustomers = async () => {
+  const response = await api.get('/admin/users/my-customers');
+  return response.data;
 };
 
 // ─── Notifications ───────────────────────────────────────────────────────────
@@ -190,5 +214,45 @@ export const deleteReview = async (id: number) => {
 
 export const replyToReview = async (id: number, reply: string) => {
   const response = await api.patch(`/admin/review-management/${id}/reply`, { reply });
+  return response.data;
+};
+
+export const getOwnerReviews = async () => {
+  const response = await api.get('/reviews/owner');
+  return response.data;
+};
+
+export const ownerReplyToReview = async (id: number, reply: string) => {
+  const response = await api.patch(`/reviews/${id}/owner-reply`, { reply });
+  return response.data;
+};
+
+export const getActiveContacts = async () => {
+  const response = await api.get('/chat/active-contacts');
+  return response.data;
+};
+
+export const getChatHistory = async (userId: number) => {
+  const response = await api.get(`/chat/history/${userId}`);
+  return response.data;
+};
+// ─── Banners ──────────────────────────────────────────────────────────────────
+export const getAdminBanners = async () => {
+  const response = await api.get('/admin/banners');
+  return response.data;
+};
+
+export const createAdminBanner = async (data: any) => {
+  const response = await api.post('/admin/banners', data);
+  return response.data;
+};
+
+export const updateAdminBanner = async (id: number, data: any) => {
+  const response = await api.put(`/admin/banners/${id}`, data);
+  return response.data;
+};
+
+export const deleteAdminBanner = async (id: number) => {
+  const response = await api.delete(`/admin/banners/${id}`);
   return response.data;
 };

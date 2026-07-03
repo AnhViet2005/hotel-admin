@@ -6,7 +6,11 @@ import {
   Calendar, MessageSquare, Send, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getAdminReviews, toggleReviewPublish, deleteReview, replyToReview } from "@/utils/api";
+import {
+  getAdminReviews, toggleReviewPublish, deleteReview, replyToReview,
+  getOwnerReviews, ownerReplyToReview
+} from "@/utils/api";
+import { isAdmin } from "@/lib/auth";
 
 interface Review {
   id: number;
@@ -24,6 +28,7 @@ interface Review {
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdministrator, setIsAdministrator] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [togglingId, setTogglingId] = useState<number | null>(null);
@@ -43,7 +48,9 @@ export default function ReviewsPage() {
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAdminReviews();
+      const isAd = isAdmin();
+      setIsAdministrator(isAd);
+      const data = isAd ? await getAdminReviews() : await getOwnerReviews();
       setReviews(data);
     } catch (error) {
       console.error("Failed to fetch reviews:", error);
@@ -165,10 +172,6 @@ export default function ReviewsPage() {
                   <span>{review.rating}/5</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={cn("h-2 w-2 rounded-full", review.isPublished ? "bg-green-500" : "bg-red-500")} />
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {review.isPublished ? "Hiển thị" : "Đã ẩn"}
-                  </span>
                 </div>
               </div>
 
@@ -184,7 +187,7 @@ export default function ReviewsPage() {
               {/* Admin Reply */}
               {review.adminReply && (
                 <div className="mb-4 bg-accent-50 dark:bg-accent-950/20 border border-accent-200 dark:border-accent-800 rounded-xl p-3">
-                  <p className="text-xs font-bold text-accent-600 mb-1">Phản hồi của quản trị viên:</p>
+                  <p className="text-xs font-bold text-accent-600 mb-1">Khách sạn đã phản hồi:</p>
                   <p className="text-sm text-foreground">{review.adminReply}</p>
                   {review.adminRepliedAt && (
                     <p className="text-xs text-muted-foreground mt-1">{formatDate(review.adminRepliedAt)}</p>
@@ -219,40 +222,22 @@ export default function ReviewsPage() {
                   {review.adminReply ? "Sửa phản hồi" : "Phản hồi"}
                 </button>
 
-                {/* Hide/Show */}
-                <button
-                  onClick={() => handleToggle(review.id)}
-                  disabled={togglingId === review.id}
-                  className={cn(
-                    "flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors",
-                    review.isPublished
-                      ? "text-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/30"
-                      : "text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30"
-                  )}
-                >
-                  {togglingId === review.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : review.isPublished ? (
-                    <EyeOff className="h-3.5 w-3.5" />
-                  ) : (
-                    <Eye className="h-3.5 w-3.5" />
-                  )}
-                  {review.isPublished ? "Ẩn" : "Hiện"}
-                </button>
 
                 {/* Delete */}
-                <button
-                  onClick={() => handleDelete(review.id)}
-                  disabled={deletingId === review.id}
-                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                >
-                  {deletingId === review.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
-                  )}
-                  Xóa
-                </button>
+                {isAdministrator && (
+                  <button
+                    onClick={() => handleDelete(review.id)}
+                    disabled={deletingId === review.id}
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                  >
+                    {deletingId === review.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    Xóa
+                  </button>
+                )}
               </div>
             </div>
           ))}

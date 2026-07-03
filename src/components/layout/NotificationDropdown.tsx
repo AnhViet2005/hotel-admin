@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Bell, Check, Clock, X, BellOff } from "lucide-react";
+import { Bell, Check, Clock, X, BellOff, MessageSquare, Star } from "lucide-react";
 import { getAdminNotifications, getUnreadCount, markAllRead } from "@/utils/api";
 import { cn } from "@/lib/utils";
 
@@ -12,8 +12,8 @@ export default function NotificationDropdown() {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = async () => {
-    setLoading(true);
+  const fetchNotifications = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [data, count] = await Promise.all([
         getAdminNotifications(),
@@ -24,14 +24,13 @@ export default function NotificationDropdown() {
     } catch (error) {
       console.error("Failed to fetch notifications", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchNotifications();
-    // Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(() => fetchNotifications(true), 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -69,45 +68,70 @@ export default function NotificationDropdown() {
     return `${days} ngày trước`;
   };
 
+  const getStatusBadge = (type: string) => {
+    switch (type) {
+      case "DEPOSIT_PAID":
+        return <span className="bg-blue-500/10 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded uppercase border border-blue-500/20">Xác nhận cọc</span>;
+      case "FULL_PAYMENT_PAID":
+      case "REMAINING_PAID":
+        return <span className="bg-green-500/10 text-green-600 text-[9px] font-black px-2 py-0.5 rounded uppercase border border-green-500/20">Đã thu đủ</span>;
+      case "NEW_CHAT":
+        return <span className="bg-orange-500/10 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded uppercase border border-orange-500/20">Tin nhắn mới</span>;
+      case "NEW_REVIEW":
+        return <span className="bg-purple-500/10 text-purple-600 text-[9px] font-black px-2 py-0.5 rounded uppercase border border-purple-500/20">Đánh giá mới</span>;
+      default:
+        return <span className="bg-slate-500/10 text-slate-600 text-[9px] font-black px-2 py-0.5 rounded uppercase border border-slate-500/20">Thông báo</span>;
+    }
+  };
+
+  const getHref = (type: string) => {
+    if (type === "NEW_CHAT") return "/chat";
+    if (type === "NEW_REVIEW") return "/reviews";
+    return "/bookings";
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "relative p-2.5 rounded-xl transition-all border",
-          isOpen ? "bg-accent-500 text-white border-accent-500 shadow-lg shadow-accent-500/20" : "bg-card hover:bg-muted text-muted-foreground"
+          "relative p-2.5 rounded-xl transition-all border group",
+          isOpen ? "bg-accent-500 text-white border-accent-500 shadow-xl shadow-accent-500/30" : "bg-card hover:bg-muted text-muted-foreground border-border"
         )}
       >
-        <Bell className="h-5 w-5" />
+        <Bell className={cn("h-5 w-5", unreadCount > 0 && !isOpen && "animate-[bell-ring_1s_infinite]")} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white ring-2 ring-card group-hover:scale-110 transition-transform">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white ring-2 ring-card shadow-lg">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-4 w-96 transform origin-top-right bg-card border rounded-[24px] shadow-2xl shadow-black/10 z-[100] animate-in fade-in zoom-in slide-in-from-top-2 duration-200 overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b bg-muted/20">
-            <h3 className="font-heading font-black text-sm uppercase tracking-widest text-card-foreground">Thông báo</h3>
+        <div className="absolute right-0 mt-4 w-[420px] transform origin-top-right bg-card border rounded-[32px] shadow-2xl shadow-black/20 z-[100] animate-in fade-in zoom-in slide-in-from-top-4 duration-300 overflow-hidden">
+          <div className="flex items-center justify-between p-6 border-b bg-muted/10">
+            <div>
+              <h3 className="font-heading font-black text-xs uppercase tracking-[0.2em] text-accent-500">Yêu cầu & Thông báo</h3>
+              <p className="text-[10px] text-muted-foreground font-bold mt-1 uppercase tracking-widest">{unreadCount} yêu cầu mới cần xử lý</p>
+            </div>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-[10px] font-bold text-accent-500 hover:text-accent-600 transition-colors bg-accent-500/10 px-3 py-1.5 rounded-full"
+                className="text-[10px] font-black text-white bg-blue-500 hover:bg-blue-600 transition-all px-4 py-2 rounded-full shadow-md shadow-blue-500/20 uppercase tracking-tighter"
               >
-                Đánh dấu tất cả đã đọc
+                Đã đọc tất cả
               </button>
             )}
           </div>
 
-          <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
+          <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
             {notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center px-8">
-                <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                    <BellOff className="h-8 w-8 text-muted-foreground/30" />
+              <div className="flex flex-col items-center justify-center py-20 text-center px-10">
+                <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-6 border border-border/50">
+                    <BellOff className="h-10 w-10 text-muted-foreground/20" />
                 </div>
-                <p className="text-sm font-semibold text-card-foreground">Chưa có thông báo nào</p>
-                <p className="text-xs text-muted-foreground mt-1">Khi có cập nhật mới về thanh toán hoặc đặt phòng, chúng tôi sẽ báo cho bạn.</p>
+                <p className="text-base font-bold text-card-foreground">Hệ thống đang trống</p>
+                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">Chúng tôi sẽ tự động kéo (Pull) các yêu cầu mới về sau mỗi 5 giây.</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -115,36 +139,55 @@ export default function NotificationDropdown() {
                   <div
                     key={n.id}
                     className={cn(
-                      "p-5 transition-all hover:bg-muted/50 group relative cursor-default",
-                      !n.isRead && "bg-accent-500/[0.03]"
+                      "p-6 transition-all hover:bg-muted/30 group relative flex gap-4",
+                      !n.isRead ? "bg-accent-500/[0.04]" : "opacity-70"
                     )}
                   >
                     {!n.isRead && (
-                      <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent-500 rounded-full" />
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent-500 rounded-r-full" />
                     )}
-                    <div className="flex gap-4">
-                      <div className={cn(
-                        "h-10 w-10 shrink-0 rounded-2xl flex items-center justify-center shadow-sm",
-                        !n.isRead ? "bg-accent-500 text-white" : "bg-muted text-muted-foreground"
-                      )}>
-                        {n.message.includes("cọc") ? <Check className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+                    
+                    <div className={cn(
+                      "h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-500",
+                      !n.isRead ? "bg-accent-500 text-white shadow-accent-500/20" : "bg-muted text-muted-foreground border border-border"
+                    )}>
+                      {n.type === "DEPOSIT_PAID" || n.type === "FULL_PAYMENT_PAID" || n.type === "REMAINING_PAID" ? (
+                        <Check className="h-6 w-6" />
+                      ) : n.type === "NEW_CHAT" ? (
+                        <MessageSquare className="h-6 w-6" />
+                      ) : n.type === "NEW_REVIEW" ? (
+                        <Star className="h-6 w-6" />
+                      ) : (
+                        <Clock className="h-6 w-6" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                         {getStatusBadge(n.type)}
+                         <span className="text-[10px] font-bold text-muted-foreground/50 uppercase">{formatTime(n.createdAt)}</span>
                       </div>
-                      <div className="flex-1 space-y-1">
-                        <p className={cn(
-                          "text-sm leading-relaxed",
-                          !n.isRead ? "text-card-foreground font-bold" : "text-muted-foreground"
-                        )}>
-                          {n.message}
-                        </p>
-                        <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
-                          <span>{formatTime(n.createdAt)}</span>
-                          {n.bookingCode && (
-                            <>
-                              <span>•</span>
-                              <span className="text-accent-500 font-black">#{n.bookingCode}</span>
-                            </>
-                          )}
-                        </div>
+                      
+                      <p className={cn(
+                        "text-[13px] leading-relaxed mb-3",
+                        !n.isRead ? "text-card-foreground font-bold" : "text-muted-foreground font-medium"
+                      )}>
+                        {n.message}
+                      </p>
+
+                      <div className="flex items-center justify-between">
+                        {n.bookingCode ? (
+                          <span className="text-[10px] font-black text-accent-500 bg-accent-500/10 px-2 py-0.5 rounded-md font-mono">
+                            #{n.bookingCode}
+                          </span>
+                        ) : <div />}
+                        
+                        <a 
+                          href={getHref(n.type)} 
+                          className="flex items-center gap-1.5 text-[10px] font-black text-accent-500 uppercase tracking-widest hover:gap-2.5 transition-all"
+                        >
+                          Xử lý ngay <Check className="h-3 w-3" />
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -153,16 +196,22 @@ export default function NotificationDropdown() {
             )}
           </div>
 
-          <div className="p-4 border-t bg-muted/10">
-            <button
-              onClick={() => setIsOpen(false)}
-              className="w-full py-2.5 rounded-xl text-xs font-bold text-muted-foreground hover:bg-muted transition-all"
-            >
-              Đóng
-            </button>
+          <div className="p-4 border-t bg-muted/20 text-center">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest animate-pulse">
+               Đang theo dõi (Polling 5s) • Kết nối ổn định
+            </p>
           </div>
         </div>
       )}
+      <style jsx global>{`
+        @keyframes bell-ring {
+          0%, 100% { transform: rotate(0); }
+          20% { transform: rotate(15deg); }
+          40% { transform: rotate(-15deg); }
+          60% { transform: rotate(10deg); }
+          80% { transform: rotate(-10deg); }
+        }
+      `}</style>
     </div>
   );
 }

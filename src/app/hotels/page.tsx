@@ -6,9 +6,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  getAdminHotels, createAdminHotel, updateAdminHotel, deleteAdminHotel, uploadFile,
+  getAdminHotels, createAdminHotel, updateAdminHotel, deleteAdminHotel, uploadFile, approveAdminHotel,
   getRoomTypes, createRoomType, updateRoomType, deleteRoomType
 } from "@/utils/api";
+import { isAdmin } from "@/lib/auth";
 
 interface Hotel {
   id: number;
@@ -19,6 +20,7 @@ interface Hotel {
   basePrice?: number;
   status: string;
   rooms: number;
+  isApproved?: boolean;
   image: string;
   description: string;
   addressLine: string;
@@ -256,10 +258,23 @@ export default function HotelsPage() {
   const handleDelete = async (id: number) => {
     try {
       console.log('Xóa hotel id:', id);
-      await deleteAdminHotel(id);
+      await deleteAdminHotel(id, 'hard');
       setDeletingId(null);
       fetchHotels();
-    } catch { /* empty */ }
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || "Không thể xóa khách sạn. Có thể khách sạn này đang có dữ liệu liên quan (phòng, đặt phòng) không thể xóa vĩnh viễn.";
+      alert(msg);
+      setDeletingId(null);
+    }
+  };
+
+  const handleApprove = async (id: number) => {
+    try {
+      await approveAdminHotel(id);
+      fetchHotels();
+    } catch (e: any) {
+      alert(e?.response?.data?.message || "Không thể phê duyệt khách sạn.");
+    }
   };
 
   return (
@@ -272,13 +287,15 @@ export default function HotelsPage() {
             {loading ? "Đang tải..." : `${hotels.length} khách sạn trong hệ thống.`}
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 bg-accent-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-accent-500/20 hover:bg-accent-600 transition-all transform hover:-translate-y-0.5"
-        >
-          <Plus className="h-5 w-5" />
-          Thêm khách sạn
-        </button>
+        {!isAdmin() && (
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 bg-accent-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-accent-500/20 hover:bg-accent-600 transition-all transform hover:-translate-y-0.5"
+          >
+            <Plus className="h-5 w-5" />
+            Thêm khách sạn
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -352,13 +369,36 @@ export default function HotelsPage() {
                       >
                         <Bed className="h-4 w-4" />
                       </button>
-                      <button
-                        onClick={() => openEdit(hotel)}
-                        className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded-lg transition-colors"
-                        title="Sửa"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
+                      {!isAdmin() && (
+                        <button
+                          onClick={() => openEdit(hotel)}
+                          className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded-lg transition-colors"
+                          title="Sửa"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      )}
+                      
+                      {isAdmin() && !hotel.isApproved && (
+                        <button
+                          onClick={() => handleApprove(hotel.id)}
+                          className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 rounded-lg transition-colors"
+                          title="Duyệt khách sạn"
+                        >
+                          <Check className="h-5 w-5" />
+                        </button>
+                      )}
+
+                      {isAdmin() && !hotel.isApproved && (
+                        <button
+                          onClick={() => handleApprove(hotel.id)}
+                          className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 rounded-lg transition-colors"
+                          title="Duyệt khách sạn"
+                        >
+                          <Check className="h-5 w-5" />
+                        </button>
+                      )}
+
                       <button
                         onClick={() => setDeletingId(hotel.id)}
                         className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded-lg transition-colors"
@@ -384,6 +424,15 @@ export default function HotelsPage() {
                     )}>
                       {hotel.status === "active" ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
                       {hotel.status === "active" ? "Hoạt động" : "Vô hiệu hóa"}
+                    </span>
+
+                    <span className={cn(
+                      "px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5",
+                      hotel.isApproved
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30"
+                    )}>
+                      {hotel.isApproved ? "Đã duyệt" : "Chờ duyệt"}
                     </span>
                   </div>
                 </div>
@@ -736,12 +785,14 @@ export default function HotelsPage() {
             ) : (
                 <div className="flex justify-between items-center">
                   <h4 className="font-bold text-base">Danh sách loại phòng ({roomTypes.length})</h4>
-                  <button 
-                    onClick={handleAddRoomTypeClick}
-                    className="px-4 py-2 rounded-xl bg-accent-500 text-white text-sm font-bold hover:bg-accent-600 transition-colors flex items-center gap-1"
-                  >
-                    <Plus className="h-4 w-4" /> Thêm loại phòng
-                  </button>
+                  {!isAdmin() && (
+                    <button 
+                      onClick={handleAddRoomTypeClick}
+                      className="px-4 py-2 rounded-xl bg-accent-500 text-white text-sm font-bold hover:bg-accent-600 transition-colors flex items-center gap-1"
+                    >
+                      <Plus className="h-4 w-4" /> Thêm loại phòng
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -796,17 +847,19 @@ export default function HotelsPage() {
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              <button 
-                                onClick={() => handleEditRoomType(rt)}
-                                className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded-lg transition-colors"
-                                title="Sửa"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </button>
+                              {!isAdmin() && (
+                                <button 
+                                  onClick={() => handleEditRoomType(rt)}
+                                  className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded-lg transition-colors"
+                                  title="Sửa loại phòng"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                              )}
                               <button 
                                 onClick={() => handleDeleteRoomType(rt.id)}
-                                className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded-lg transition-colors"
-                                title="Xóa"
+                                className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded-lg transition-colors"
+                                title="Xóa loại phòng"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
