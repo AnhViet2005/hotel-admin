@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Plus, 
-  Trash2, 
-  Pencil, 
-  Save, 
-  X, 
-  Image as ImageIcon, 
-  Loader2, 
+import {
+  Plus,
+  Trash2,
+  Pencil,
+  Save,
+  X,
+  Image as ImageIcon,
+  Loader2,
   CheckCircle2,
   AlertCircle,
   GripVertical,
@@ -17,12 +17,12 @@ import {
   Link as LinkIcon,
   Star
 } from "lucide-react";
-import { 
-  getAdminBanners, 
-  createAdminBanner, 
-  updateAdminBanner, 
+import {
+  getAdminBanners,
+  createAdminBanner,
+  updateAdminBanner,
   deleteAdminBanner,
-  uploadFile 
+  uploadFile
 } from "@/utils/api";
 import { cn } from "@/lib/utils";
 
@@ -138,7 +138,7 @@ export default function BannerManagement() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-heading font-bold mb-2">Quản lý Hero Banner</h1>
+          <h1 className="text-3xl font-heading font-bold mb-2">Banner</h1>
           <p className="text-muted-foreground">Các banner này chính là hình ảnh và nội dung "chìm" hiển thị tại đầu trang chủ website booking.</p>
         </div>
         <button
@@ -167,15 +167,15 @@ export default function BannerManagement() {
       ) : (
         <div className="space-y-6">
           {banners.map((banner) => (
-            <div 
-              key={banner.id} 
+            <div
+              key={banner.id}
               className="group bg-card rounded-3xl border border-border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col md:flex-row h-auto md:h-64"
             >
               <div className="relative w-full md:w-1/3 min-h-[200px] md:min-h-0 overflow-hidden">
-                <img 
-                  src={banner.imageUrl} 
-                  alt={banner.title} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                <img
+                  src={banner.imageUrl}
+                  alt={banner.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute top-4 left-4">
                   <span className={cn(
@@ -188,22 +188,22 @@ export default function BannerManagement() {
               </div>
               <div className="p-8 flex-1 flex flex-col justify-center relative">
                 <div className="absolute top-4 right-4 flex gap-2">
-                  <button 
+                  <button
                     onClick={() => handleOpenEdit(banner)}
                     className="p-3 bg-muted rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(banner.id)}
                     className="p-3 bg-muted rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
-                
+
                 <div className="flex items-center gap-2 text-accent-500 text-xs font-black uppercase tracking-[0.2em] mb-3">
-                   Thứ tự: {banner.displayOrder}
+                  Thứ tự: {banner.displayOrder}
                 </div>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function BannerManagement() {
                           Thay đổi ảnh
                           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
                         </label>
-                        <button 
+                        <button
                           onClick={() => setForm(f => ({ ...f, imageUrl: "" }))}
                           className="bg-red-600 text-white p-2 rounded-xl shadow-md hover:bg-red-700 transition-all"
                         >
@@ -279,17 +279,17 @@ export default function BannerManagement() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-muted-foreground ml-1">Thứ tự ưu tiên</label>
-                    <input 
+                    <input
                       type="number"
-                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500/20 outline-none transition-all" 
-                      value={form.displayOrder} 
-                      onChange={e => setForm(f => ({ ...f, displayOrder: Number(e.target.value) }))} 
+                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500/20 outline-none transition-all"
+                      value={form.displayOrder}
+                      onChange={e => setForm(f => ({ ...f, displayOrder: Number(e.target.value) }))}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-muted-foreground ml-1">Trạng thái hiển thị</label>
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => setForm(f => ({ ...f, isActive: true }))}
                         className={cn(
                           "flex-1 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2",
@@ -298,7 +298,7 @@ export default function BannerManagement() {
                       >
                         <Eye className="h-4 w-4" /> Bật
                       </button>
-                      <button 
+                      <button
                         onClick={() => setForm(f => ({ ...f, isActive: false }))}
                         className={cn(
                           "flex-1 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2",
@@ -314,8 +314,8 @@ export default function BannerManagement() {
             </div>
 
             <div className="flex gap-4 p-8 border-t">
-              <button 
-                onClick={() => setShowModal(false)} 
+              <button
+                onClick={() => setShowModal(false)}
                 className="flex-1 px-6 py-4 rounded-2xl border border-border font-bold hover:bg-muted transition-all"
               >
                 Hủy bỏ

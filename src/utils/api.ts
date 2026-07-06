@@ -113,6 +113,11 @@ export const getAdminUsers = async (keyword?: string, role?: string) => {
   return response.data;
 };
 
+export const getOwnerDetails = async (id: number) => {
+  const response = await api.get(`/admin/users/${id}/details`);
+  return response.data;
+};
+
 export const toggleUserStatus = async (id: number) => {
   const response = await api.patch(`/admin/users/${id}/status`);
   return response.data;

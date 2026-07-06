@@ -291,7 +291,7 @@ export default function HotelsPage() {
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-heading font-bold mb-2">Quản lý khách sạn</h1>
+          <h1 className="text-3xl font-heading font-bold mb-2">Khách Sạn</h1>
           <p className="text-muted-foreground">
             {loading ? "Đang tải..." : `${hotels.length} khách sạn trong hệ thống.`}
           </p>
@@ -374,7 +374,7 @@ export default function HotelsPage() {
                       <button
                         onClick={() => openRoomManagement(hotel)}
                         className="p-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 rounded-lg transition-colors"
-                        title="Quản lý loại phòng"
+                        title="Loại Phòng"
                       >
                         <Bed className="h-4 w-4" />
                       </button>
@@ -425,7 +425,7 @@ export default function HotelsPage() {
                         {hotel.price}<span className="text-sm font-medium text-muted-foreground">/đêm</span>
                       </p>
                     </div>
-                    <button 
+                    <button
                       onClick={() => handleToggleStatus(hotel.id)}
                       className={cn(
                         "px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95",
@@ -630,7 +630,7 @@ export default function HotelsPage() {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <div>
-                <h3 className="text-xl font-bold font-heading">Quản lý loại phòng</h3>
+                <h3 className="text-xl font-bold font-heading">Loại Phòng</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">{selectedHotel.name}</p>
               </div>
               <button
