@@ -14,7 +14,8 @@ import {
   GripVertical,
   Eye,
   EyeOff,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Star
 } from "lucide-react";
 import { 
   getAdminBanners, 
@@ -36,8 +37,8 @@ interface Banner {
 }
 
 const EMPTY_BANNER = {
-  title: "",
-  subtitle: "",
+  title: "Trải Nghiệm Kì Nghỉ",
+  subtitle: "Hoàn Hảo",
   imageUrl: "",
   linkUrl: "",
   displayOrder: 0,
@@ -101,8 +102,8 @@ export default function BannerManagement() {
   };
 
   const handleSave = async () => {
-    if (!form.title || !form.imageUrl) {
-      setError("Vui lòng nhập tiêu đề và tải lên hình ảnh.");
+    if (!form.imageUrl) {
+      setError("Vui lòng tải lên hình ảnh.");
       return;
     }
 
@@ -137,8 +138,8 @@ export default function BannerManagement() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-heading font-bold mb-2">Quản lý Banner</h1>
-          <p className="text-muted-foreground">Các banner này sẽ hiển thị tại phần "Khách Sạn Nổi Bật" trên trang chủ.</p>
+          <h1 className="text-3xl font-heading font-bold mb-2">Quản lý Hero Banner</h1>
+          <p className="text-muted-foreground">Các banner này chính là hình ảnh và nội dung "chìm" hiển thị tại đầu trang chủ website booking.</p>
         </div>
         <button
           onClick={handleOpenAdd}
@@ -160,60 +161,50 @@ export default function BannerManagement() {
           </div>
           <div>
             <p className="text-xl font-bold">Chưa có banner nào</p>
-            <p className="text-muted-foreground">Nhấp vào nút phía trên để bắt đầu tạo nội dung nổi bật.</p>
+            <p className="text-muted-foreground">Nhấp vào nút phía trên để bắt đầu tạo nội dung quảng bá.</p>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="space-y-6">
           {banners.map((banner) => (
             <div 
               key={banner.id} 
-              className="group bg-card rounded-3xl border border-border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col"
+              className="group bg-card rounded-3xl border border-border overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col md:flex-row h-auto md:h-64"
             >
-              <div className="relative aspect-[4/5] overflow-hidden">
+              <div className="relative w-full md:w-1/3 min-h-[200px] md:min-h-0 overflow-hidden">
                 <img 
                   src={banner.imageUrl} 
                   alt={banner.title} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                 />
-                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
-                  <h3 className="text-xl font-heading font-bold text-white mb-1">{banner.title}</h3>
-                  <p className="text-white/80 text-sm font-medium">{banner.subtitle}</p>
-                </div>
-                <div className="absolute top-4 right-4 flex gap-2 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                  <button 
-                    onClick={() => handleOpenEdit(banner)}
-                    className="p-2 bg-white/90 backdrop-blur-sm rounded-xl text-blue-600 shadow-lg hover:bg-white transition-colors"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(banner.id)}
-                    className="p-2 bg-white/90 backdrop-blur-sm rounded-xl text-red-600 shadow-lg hover:bg-white transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
                 <div className="absolute top-4 left-4">
                   <span className={cn(
                     "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
                     banner.isActive ? "bg-green-500 text-white" : "bg-red-500 text-white"
                   )}>
-                    {banner.isActive ? "Đang bật" : "Đang tắt"}
+                    {banner.isActive ? "Đang hoạt động" : "Tạm ẩn"}
                   </span>
                 </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs font-bold mb-4 uppercase tracking-widest">
-                  <GripVertical className="h-3 w-3" />
-                  Thứ tự: {banner.displayOrder}
+              <div className="p-8 flex-1 flex flex-col justify-center relative">
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <button 
+                    onClick={() => handleOpenEdit(banner)}
+                    className="p-3 bg-muted rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(banner.id)}
+                    className="p-3 bg-muted rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
                 </div>
-                {banner.linkUrl && (
-                  <div className="flex items-center gap-2 text-accent-500 text-xs font-medium bg-accent-500/10 p-2 rounded-xl border border-accent-500/20 truncate">
-                    <LinkIcon className="h-3 w-3 flex-shrink-0" />
-                    <span className="truncate">{banner.linkUrl}</span>
-                  </div>
-                )}
+                
+                <div className="flex items-center gap-2 text-accent-500 text-xs font-black uppercase tracking-[0.2em] mb-3">
+                   Thứ tự: {banner.displayOrder}
+                </div>
               </div>
             </div>
           ))}
@@ -229,7 +220,7 @@ export default function BannerManagement() {
                 <h2 className="text-2xl font-bold font-heading">
                   {editingBanner ? "Cập nhật Banner" : "Thêm Banner mới"}
                 </h2>
-                <p className="text-sm text-muted-foreground">Thiết lập thông tin hiển thị cho khách sạn nổi bật.</p>
+                <p className="text-sm text-muted-foreground">Thiết lập thông tin quảng bá hiển thị trên trang chủ.</p>
               </div>
               <button onClick={() => setShowModal(false)} className="p-3 hover:bg-muted rounded-2xl transition-all">
                 <X className="h-6 w-6" />
@@ -276,7 +267,7 @@ export default function BannerManagement() {
                             <ImageIcon className="h-6 w-6" />
                           </div>
                           <p className="text-sm font-bold text-foreground">Tải ảnh banner lên</p>
-                          <p className="text-xs text-muted-foreground">Kích thước gợi ý: 800x1000px</p>
+                          <p className="text-xs text-muted-foreground">Kích thước gợi ý: 1920x600px cho trang chủ</p>
                         </>
                       )}
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
@@ -285,35 +276,9 @@ export default function BannerManagement() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-1 space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground ml-1">Tiêu đề (Tên KS) *</label>
-                    <input 
-                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500/20 outline-none transition-all" 
-                      placeholder="VD: The Azure Resort" 
-                      value={form.title} 
-                      onChange={e => setForm(f => ({ ...f, title: e.target.value }))} 
-                    />
-                  </div>
-                  <div className="md:col-span-1 space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground ml-1">Phụ đề (Vị trí)</label>
-                    <input 
-                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500/20 outline-none transition-all" 
-                      placeholder="VD: Maldives" 
-                      value={form.subtitle} 
-                      onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} 
-                    />
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground ml-1">Đường dẫn khi nhấn</label>
-                    <input 
-                      className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500/20 outline-none transition-all" 
-                      placeholder="VD: /hotel/h1" 
-                      value={form.linkUrl} 
-                      onChange={e => setForm(f => ({ ...f, linkUrl: e.target.value }))} 
-                    />
-                  </div>
+
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground ml-1">Thứ tự hiển thị</label>
+                    <label className="text-sm font-bold text-muted-foreground ml-1">Thứ tự ưu tiên</label>
                     <input 
                       type="number"
                       className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-accent-500/20 outline-none transition-all" 
@@ -322,7 +287,7 @@ export default function BannerManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground ml-1">Trạng thái</label>
+                    <label className="text-sm font-bold text-muted-foreground ml-1">Trạng thái hiển thị</label>
                     <div className="flex gap-2">
                       <button 
                         onClick={() => setForm(f => ({ ...f, isActive: true }))}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Bell, Check, Clock, X, BellOff, MessageSquare, Star } from "lucide-react";
-import { getAdminNotifications, getUnreadCount, markAllRead } from "@/utils/api";
+import { Bell, Check, Clock, X, BellOff, MessageSquare, Star, Loader2 } from "lucide-react";
+import { getAdminNotifications, getUnreadCount, markAllRead, updateBookingStatus } from "@/utils/api";
 import { cn } from "@/lib/utils";
 
 export default function NotificationDropdown() {
@@ -30,7 +30,7 @@ export default function NotificationDropdown() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(() => fetchNotifications(true), 5000);
+    const interval = setInterval(() => fetchNotifications(true), 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -51,6 +51,22 @@ export default function NotificationDropdown() {
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
     } catch (error) {
       console.error("Failed to mark all as read", error);
+    }
+  };
+
+  const [processingId, setProcessingId] = useState<number | null>(null);
+
+  const handleAction = async (notif: any, status: string) => {
+    if (!notif.bookingId) return;
+    setProcessingId(notif.id);
+    try {
+      await updateBookingStatus(notif.bookingId, status);
+      // Re-fetch to update the list
+      await fetchNotifications(true);
+    } catch (error) {
+      console.error("Failed to update status", error);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -175,19 +191,31 @@ export default function NotificationDropdown() {
                         {n.message}
                       </p>
 
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mt-1">
                         {n.bookingCode ? (
                           <span className="text-[10px] font-black text-accent-500 bg-accent-500/10 px-2 py-0.5 rounded-md font-mono">
                             #{n.bookingCode}
                           </span>
                         ) : <div />}
                         
-                        <a 
-                          href={getHref(n.type)} 
-                          className="flex items-center gap-1.5 text-[10px] font-black text-accent-500 uppercase tracking-widest hover:gap-2.5 transition-all"
-                        >
-                          Xử lý ngay <Check className="h-3 w-3" />
-                        </a>
+                        <div className="flex items-center gap-3">
+                          {n.type === "DEPOSIT_PAID" && (
+                            <button
+                              onClick={() => handleAction(n, "CONFIRMED")}
+                              disabled={processingId === n.id}
+                              className="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white text-[10px] font-black rounded-lg shadow-lg shadow-blue-500/20 uppercase transition-all flex items-center gap-1.5"
+                            >
+                              {processingId === n.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                              Phê duyệt cọc
+                            </button>
+                          )}
+                          <a 
+                            href={getHref(n.type)} 
+                            className="flex items-center gap-1 text-[9px] font-black text-muted-foreground hover:text-accent-500 uppercase tracking-widest transition-all group/link"
+                          >
+                            Chi tiết <X className="h-3 w-3 rotate-45 group-hover/link:translate-x-0.5 transition-transform" />
+                          </a>
+                        </div>
                       </div>
                     </div>
                   </div>

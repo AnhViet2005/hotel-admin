@@ -19,24 +19,19 @@ import { removeAuth, isOwner } from "@/lib/auth";
 import { useEffect, useState } from "react";
 
 const navigation = [
-
   { name: "Tổng quan", href: "/", icon: LayoutDashboard },
   { name: "Khách sạn", href: "/hotels", icon: Hotel },
-  { name: "Đơn đặt phòng", href: "/bookings", icon: CalendarDays },
   { name: "Người dùng", href: "/users", icon: Users },
+  { name: "Banner chuyên mục", href: "/banner", icon: Image },
+  { name: "Bài viết", href: "/posts", icon: Globe },
+  { name: "Đơn đặt phòng", href: "/bookings", icon: CalendarDays },
   { name: "Đánh giá", href: "/reviews", icon: MessageSquare },
-  { name: "Chat", href: "/chat", icon: MessageSquare },
-  { name: "Banner", href: "/banner", icon: Image, adminOnly: true },
+  { name: "Cài đặt hệ thống", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [owner, setOwner] = useState(false);
-
-  useEffect(() => {
-    setOwner(isOwner());
-  }, []);
 
   const handleLogout = () => {
     removeAuth();
@@ -59,7 +54,6 @@ export default function Sidebar() {
 
       <nav className="flex-1 space-y-1 px-4 py-4">
         {navigation.map((item) => {
-          if (item.adminOnly && owner) return null;
           const isActive = pathname === item.href;
           return (
             <Link

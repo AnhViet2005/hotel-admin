@@ -7,7 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   getAdminHotels, createAdminHotel, updateAdminHotel, deleteAdminHotel, uploadFile, approveAdminHotel,
-  getRoomTypes, createRoomType, updateRoomType, deleteRoomType
+  getRoomTypes, createRoomType, updateRoomType, deleteRoomType, toggleHotelStatus
 } from "@/utils/api";
 import { isAdmin } from "@/lib/auth";
 
@@ -277,6 +277,15 @@ export default function HotelsPage() {
     }
   };
 
+  const handleToggleStatus = async (id: number) => {
+    try {
+      const updatedHotel = await toggleHotelStatus(id);
+      setHotels(prev => prev.map(h => h.id === id ? updatedHotel : h));
+    } catch (e: any) {
+      alert(e?.response?.data?.message || "Không thể thay đổi trạng thái khách sạn.");
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -378,7 +387,7 @@ export default function HotelsPage() {
                           <Pencil className="h-4 w-4" />
                         </button>
                       )}
-                      
+
                       {isAdmin() && !hotel.isApproved && (
                         <button
                           onClick={() => handleApprove(hotel.id)}
@@ -416,15 +425,19 @@ export default function HotelsPage() {
                         {hotel.price}<span className="text-sm font-medium text-muted-foreground">/đêm</span>
                       </p>
                     </div>
-                    <span className={cn(
-                      "px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5",
-                      hotel.status === "active"
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30"
-                        : "bg-red-100 text-red-700 dark:bg-red-900/30"
-                    )}>
-                      {hotel.status === "active" ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
+                    <button 
+                      onClick={() => handleToggleStatus(hotel.id)}
+                      className={cn(
+                        "px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95",
+                        hotel.status === "active"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 hover:bg-green-200"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 hover:bg-red-200"
+                      )}
+                      title={hotel.status === "active" ? "Nhấp để vô hiệu hóa" : "Nhấp để kích hoạt"}
+                    >
+                      {hotel.status === "active" ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
                       {hotel.status === "active" ? "Hoạt động" : "Vô hiệu hóa"}
-                    </span>
+                    </button>
 
                     <span className={cn(
                       "px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5",
@@ -500,37 +513,37 @@ export default function HotelsPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground mb-1 block">Giá khởi điểm (VNĐ)</label>
-                  <input 
-                    className="input-field w-full font-bold text-accent-500" 
-                    type="number" 
-                    placeholder="VD: 4500000" 
-                    value={form.basePrice} 
-                    onChange={e => setForm(f => ({ ...f, basePrice: Number(e.target.value) }))} 
+                  <input
+                    className="input-field w-full font-bold text-accent-500"
+                    type="number"
+                    placeholder="VD: 4500000"
+                    value={form.basePrice}
+                    onChange={e => setForm(f => ({ ...f, basePrice: Number(e.target.value) }))}
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="text-sm font-medium text-muted-foreground mb-2 block">Ảnh đại diện khách sạn *</label>
-                  
+
                   {form.imageUrl ? (
                     <div className="relative h-48 w-full rounded-2xl overflow-hidden border bg-muted group">
-                      <img 
-                        src={form.imageUrl} 
-                        alt="Preview" 
+                      <img
+                        src={form.imageUrl}
+                        alt="Preview"
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                         <label className="cursor-pointer bg-white text-black px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-neutral-100 transition-colors">
                           Thay đổi ảnh
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={handleImageUpload} 
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageUpload}
                             disabled={uploading}
                           />
                         </label>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => setForm(f => ({ ...f, imageUrl: "" }))}
                           className="bg-red-600 text-white p-2 rounded-xl shadow-md hover:bg-red-700 transition-colors"
                         >
@@ -559,11 +572,11 @@ export default function HotelsPage() {
                           </>
                         )}
                       </div>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleImageUpload} 
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
                         disabled={uploading}
                       />
                     </label>
@@ -620,7 +633,7 @@ export default function HotelsPage() {
                 <h3 className="text-xl font-bold font-heading">Quản lý loại phòng</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">{selectedHotel.name}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowRoomModal(false)}
                 className="p-2 hover:bg-muted rounded-xl transition-colors"
               >
@@ -637,7 +650,7 @@ export default function HotelsPage() {
                     <Bed className="h-5 w-5 text-accent-500" />
                     {editingRoomType.id ? "Sửa loại phòng" : "Thêm loại phòng mới"}
                   </h4>
-                  
+
                   {roomError && (
                     <div className="p-3 bg-red-100 border border-red-200 dark:bg-red-900/30 dark:border-red-900 text-red-600 rounded-xl text-sm font-medium">
                       {roomError}
@@ -647,73 +660,73 @@ export default function HotelsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-muted-foreground mb-1 block">Tên loại phòng *</label>
-                      <input 
-                        className="input-field w-full" 
-                        placeholder="VD: Phòng Deluxe Giường Đôi" 
-                        value={roomForm.typeName} 
+                      <input
+                        className="input-field w-full"
+                        placeholder="VD: Phòng Deluxe Giường Đôi"
+                        value={roomForm.typeName}
                         onChange={e => setRoomForm(r => ({ ...r, typeName: e.target.value }))}
                       />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground mb-1 block">Giá cơ bản (VNĐ) *</label>
-                      <input 
-                        className="input-field w-full" 
-                        type="number" 
-                        placeholder="VD: 1200000" 
-                        value={roomForm.basePrice} 
+                      <input
+                        className="input-field w-full"
+                        type="number"
+                        placeholder="VD: 1200000"
+                        value={roomForm.basePrice}
                         onChange={e => setRoomForm(r => ({ ...r, basePrice: Number(e.target.value) }))}
                       />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground mb-1 block">Số lượng phòng *</label>
-                      <input 
-                        className="input-field w-full" 
-                        type="number" 
-                        placeholder="VD: 10" 
-                        value={roomForm.totalRooms} 
+                      <input
+                        className="input-field w-full"
+                        type="number"
+                        placeholder="VD: 10"
+                        value={roomForm.totalRooms}
                         onChange={e => setRoomForm(r => ({ ...r, totalRooms: Number(e.target.value) }))}
                       />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground mb-1 block">Diện tích (m²)</label>
-                      <input 
-                        className="input-field w-full" 
-                        type="number" 
-                        step="0.1" 
-                        placeholder="VD: 32" 
-                        value={roomForm.roomSize} 
+                      <input
+                        className="input-field w-full"
+                        type="number"
+                        step="0.1"
+                        placeholder="VD: 32"
+                        value={roomForm.roomSize}
                         onChange={e => setRoomForm(r => ({ ...r, roomSize: Number(e.target.value) }))}
                       />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground mb-1 block">Số người lớn tối đa</label>
-                      <input 
-                        className="input-field w-full" 
-                        type="number" 
-                        placeholder="VD: 2" 
-                        value={roomForm.maxAdults} 
+                      <input
+                        className="input-field w-full"
+                        type="number"
+                        placeholder="VD: 2"
+                        value={roomForm.maxAdults}
                         onChange={e => setRoomForm(r => ({ ...r, maxAdults: Number(e.target.value) }))}
                       />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground mb-1 block">Số trẻ em tối đa</label>
-                      <input 
-                        className="input-field w-full" 
-                        type="number" 
-                        placeholder="VD: 1" 
-                        value={roomForm.maxChildren} 
+                      <input
+                        className="input-field w-full"
+                        type="number"
+                        placeholder="VD: 1"
+                        value={roomForm.maxChildren}
                         onChange={e => setRoomForm(r => ({ ...r, maxChildren: Number(e.target.value) }))}
                       />
                     </div>
                     <div className="md:col-span-2 space-y-2">
-                       <label className="text-sm font-medium text-muted-foreground mb-1 block">Mô tả loại phòng</label>
-                       <textarea 
-                         className="input-field w-full resize-none" 
-                         rows={2} 
-                         placeholder="Mô tả tiện nghi phòng..." 
-                         value={roomForm.description} 
-                         onChange={e => setRoomForm(r => ({ ...r, description: e.target.value }))}
-                       />
+                      <label className="text-sm font-medium text-muted-foreground mb-1 block">Mô tả loại phòng</label>
+                      <textarea
+                        className="input-field w-full resize-none"
+                        rows={2}
+                        placeholder="Mô tả tiện nghi phòng..."
+                        value={roomForm.description}
+                        onChange={e => setRoomForm(r => ({ ...r, description: e.target.value }))}
+                      />
                     </div>
 
                     <div className="md:col-span-2 space-y-3">
@@ -721,14 +734,14 @@ export default function HotelsPage() {
                         <label className="text-sm font-medium text-muted-foreground">Ảnh loại phòng</label>
                         <span className="text-xs text-muted-foreground">{roomForm.imageUrls.length}/4</span>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {roomForm.imageUrls.map((url, idx) => (
                           <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border bg-muted group">
                             <img src={url} alt={`Room ${idx}`} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 onClick={() => removeRoomImage(idx)}
                                 className="bg-red-600 text-white p-1.5 rounded-lg shadow-md hover:bg-red-700 transition-colors"
                               >
@@ -742,7 +755,7 @@ export default function HotelsPage() {
                             )}
                           </div>
                         ))}
-                        
+
                         {roomForm.imageUrls.length < 4 && (
                           <label className={cn(
                             "flex flex-col items-center justify-center aspect-video border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/30 transition-all",
@@ -758,35 +771,35 @@ export default function HotelsPage() {
                             )}
                             <input type="file" accept="image/*" className="hidden" onChange={handleRoomImageUpload} disabled={roomUploading} />
                           </label>
-                      )}
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingRoomType(null)}
+                        className="px-4 py-2 rounded-xl border text-sm font-bold hover:bg-muted transition-colors"
+                      >
+                        Hủy form
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveRoomType}
+                        disabled={savingRoom || roomUploading}
+                        className="px-4 py-2 rounded-xl bg-accent-500 text-white text-sm font-bold hover:bg-accent-600 transition-colors flex items-center gap-1.5 disabled:opacity-60"
+                      >
+                        {savingRoom ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        Lưu
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button 
-                      type="button" 
-                      onClick={() => setEditingRoomType(null)} 
-                      className="px-4 py-2 rounded-xl border text-sm font-bold hover:bg-muted transition-colors"
-                    >
-                      Hủy form
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={handleSaveRoomType}
-                      disabled={savingRoom || roomUploading}
-                      className="px-4 py-2 rounded-xl bg-accent-500 text-white text-sm font-bold hover:bg-accent-600 transition-colors flex items-center gap-1.5 disabled:opacity-60"
-                    >
-                      {savingRoom ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                      Lưu
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ) : (
+              ) : (
                 <div className="flex justify-between items-center">
                   <h4 className="font-bold text-base">Danh sách loại phòng ({roomTypes.length})</h4>
                   {!isAdmin() && (
-                    <button 
+                    <button
                       onClick={handleAddRoomTypeClick}
                       className="px-4 py-2 rounded-xl bg-accent-500 text-white text-sm font-bold hover:bg-accent-600 transition-colors flex items-center gap-1"
                     >
@@ -848,7 +861,7 @@ export default function HotelsPage() {
                           <td className="p-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
                               {!isAdmin() && (
-                                <button 
+                                <button
                                   onClick={() => handleEditRoomType(rt)}
                                   className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded-lg transition-colors"
                                   title="Sửa loại phòng"
@@ -856,7 +869,7 @@ export default function HotelsPage() {
                                   <Pencil className="h-4 w-4" />
                                 </button>
                               )}
-                              <button 
+                              <button
                                 onClick={() => handleDeleteRoomType(rt.id)}
                                 className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 rounded-lg transition-colors"
                                 title="Xóa loại phòng"
@@ -875,7 +888,7 @@ export default function HotelsPage() {
 
             {/* Footer */}
             <div className="p-6 border-t bg-muted/20 flex justify-end">
-              <button 
+              <button
                 onClick={() => setShowRoomModal(false)}
                 className="px-6 py-2.5 rounded-xl bg-foreground text-background font-bold hover:opacity-90 transition-opacity"
               >

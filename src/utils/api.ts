@@ -100,6 +100,10 @@ export const approveAdminHotel = async (id: number) => {
   const response = await api.post(`/admin/hotels/${id}/approve`);
   return response.data;
 };
+export const toggleHotelStatus = async (id: number) => {
+  const response = await api.patch(`/admin/hotels/${id}/status`);
+  return response.data;
+};
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const getAdminUsers = async (keyword?: string, role?: string) => {
@@ -234,6 +238,26 @@ export const getActiveContacts = async () => {
 
 export const getChatHistory = async (userId: number) => {
   const response = await api.get(`/chat/history/${userId}`);
+  return response.data;
+};
+// ─── Posts ────────────────────────────────────────────────────────────────────
+export const getAdminPosts = async () => {
+  const response = await api.get('/admin/posts');
+  return response.data;
+};
+
+export const createAdminPost = async (data: any) => {
+  const response = await api.post('/admin/posts', data);
+  return response.data;
+};
+
+export const updateAdminPost = async (id: number, data: any) => {
+  const response = await api.put(`/admin/posts/${id}`, data);
+  return response.data;
+};
+
+export const deleteAdminPost = async (id: number) => {
+  const response = await api.delete(`/admin/posts/${id}`);
   return response.data;
 };
 // ─── Banners ──────────────────────────────────────────────────────────────────
