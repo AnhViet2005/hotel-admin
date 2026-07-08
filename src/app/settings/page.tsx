@@ -42,7 +42,8 @@ export default function SettingsPage() {
       try {
         console.log("Loading settings from backend...");
         const token = localStorage.getItem("admin_auth_token");
-        const response = await fetch("http://localhost:8080/api/contact-info", {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+        const response = await fetch(`${apiUrl}/contact-info`, {
           headers: {
             "Authorization": `Bearer ${token}`,
           },
@@ -98,10 +99,11 @@ export default function SettingsPage() {
 
       const token = localStorage.getItem("admin_auth_token");
       
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
       let res;
       if (contactId) {
         // Update existing
-        res = await fetch(`http://localhost:8080/api/contact-info/${contactId}`, {
+        res = await fetch(`${apiUrl}/contact-info/${contactId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -111,7 +113,7 @@ export default function SettingsPage() {
         });
       } else {
         // Create new
-        res = await fetch("http://localhost:8080/api/contact-info", {
+        res = await fetch(`${apiUrl}/contact-info`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

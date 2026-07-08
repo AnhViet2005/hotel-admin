@@ -78,7 +78,8 @@ export default function ChatPage() {
 
   const connect = () => {
     const token = getToken();
-    const socket = new SockJS("http://localhost:8080/ws");
+    const wsUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api').replace('/api', '');
+    const socket = new SockJS(`${wsUrl}/ws`);
     const client = new Client({
       webSocketFactory: () => socket,
       connectHeaders: { Authorization: `Bearer ${token}` },
